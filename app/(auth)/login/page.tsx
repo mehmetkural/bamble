@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { toast } from "sonner";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
@@ -54,12 +53,6 @@ export default function LoginPage() {
             {loading ? "Signing in..." : "Sign in"}
           </Button>
         </form>
-        <p className="text-center text-sm text-gray-500 mt-4">
-          No account?{" "}
-          <Link href="/signup" className="text-indigo-600 hover:underline font-medium">
-            Sign up
-          </Link>
-        </p>
       </CardContent>
     </Card>
   );
