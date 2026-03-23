@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
@@ -28,13 +28,15 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
   const [lng, setLng] = useState(initialLocation?.lng?.toFixed(6) ?? "");
   const [loading, setLoading] = useState(false);
 
-  // Sync location when modal opens with new location
-  useState(() => {
-    if (initialLocation) {
+  useEffect(() => {
+    if (open && initialLocation) {
       setLat(initialLocation.lat.toFixed(6));
       setLng(initialLocation.lng.toFixed(6));
+    } else if (open && !initialLocation) {
+      setLat("");
+      setLng("");
     }
-  });
+  }, [open, initialLocation]);
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
