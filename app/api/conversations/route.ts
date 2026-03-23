@@ -114,22 +114,26 @@ export async function POST(request: Request) {
       return NextResponse.json({ conversation_id: existingConv.id });
     }
 
-    // Create new conversation
-    const { data: conv, error: convError } = await supabase
+    // Create new conversation (generate id client-side to avoid SELECT RLS chicken-and-egg)
+    const convId = crypto.randomUUID();
+    const { error: convError } = await supabase
       .from("conversations")
-      .insert({ pin_id, type: "direct" })
-      .select("id")
-      .single();
+      .insert({ id: convId, pin_id, type: "direct" });
 
-    if (convError || !conv) return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
+    if (convError) return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
 
-    // Add both participants
+    const conv = { id: convId };
+
+    // Add self first, then pin owner (RLS allows adding others once self is a participant)
+    const { error: selfError } = await supabase
+      .from("conversation_participants")
+      .insert({ conversation_id: conv.id, user_id: user.id, is_anonymous: true, anonymous_alias: generateAlias() });
+
+    if (selfError) return NextResponse.json({ error: "Failed to add participants" }, { status: 500 });
+
     const { error: partError } = await supabase
       .from("conversation_participants")
-      .insert([
-        { conversation_id: conv.id, user_id: user.id, is_anonymous: true, anonymous_alias: generateAlias() },
-        { conversation_id: conv.id, user_id: pin.user_id, is_anonymous: true, anonymous_alias: generateAlias() },
-      ]);
+      .insert({ conversation_id: conv.id, user_id: pin.user_id, is_anonymous: true, anonymous_alias: generateAlias() });
 
     if (partError) return NextResponse.json({ error: "Failed to add participants" }, { status: 500 });
 
