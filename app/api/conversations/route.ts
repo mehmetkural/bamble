@@ -84,68 +84,24 @@ export async function POST(request: Request) {
   }
 
   if (pin_id) {
-    // Get pin owner
-    const { data: pin } = await supabase
-      .from("pins")
-      .select("user_id")
-      .eq("id", pin_id)
-      .single();
-
-    if (!pin) return NextResponse.json({ error: "Pin not found" }, { status: 404 });
-
-    // Don't chat with yourself
-    if (pin.user_id === user.id) {
-      return NextResponse.json({ error: "This is your own pin" }, { status: 400 });
-    }
-
-    // Check if conversation already exists between these two users for this pin
-    const { data: existing } = await supabase
-      .from("conversations")
-      .select("id, conversation_participants!inner(user_id)")
-      .eq("pin_id", pin_id)
-      .eq("type", "direct");
-
-    const existingConv = existing?.find((c) => {
-      const participantIds = (c.conversation_participants as any[]).map((p: any) => p.user_id);
-      return participantIds.includes(user.id) && participantIds.includes(pin.user_id);
+    const { data, error } = await supabase.rpc("create_pin_conversation", {
+      p_pin_id: pin_id,
+      p_initiator_id: user.id,
+      p_initiator_alias: generateAlias(),
+      p_owner_alias: generateAlias(),
     });
 
-    if (existingConv) {
-      return NextResponse.json({ conversation_id: existingConv.id });
+    if (error) {
+      if (error.message.includes("own pin")) {
+        return NextResponse.json({ error: "This is your own pin" }, { status: 400 });
+      }
+      if (error.message.includes("Pin not found")) {
+        return NextResponse.json({ error: "Pin not found" }, { status: 404 });
+      }
+      return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
     }
 
-    // Create new conversation (generate id client-side to avoid SELECT RLS chicken-and-egg)
-    const convId = crypto.randomUUID();
-    const { error: convError } = await supabase
-      .from("conversations")
-      .insert({ id: convId, pin_id, type: "direct" });
-
-    if (convError) return NextResponse.json({ error: "Failed to create conversation" }, { status: 500 });
-
-    const conv = { id: convId };
-
-    // Add self first, then pin owner (RLS allows adding others once self is a participant)
-    const { error: selfError } = await supabase
-      .from("conversation_participants")
-      .insert({ conversation_id: conv.id, user_id: user.id, is_anonymous: true, anonymous_alias: generateAlias() });
-
-    if (selfError) return NextResponse.json({ error: "Failed to add participants" }, { status: 500 });
-
-    const { error: partError } = await supabase
-      .from("conversation_participants")
-      .insert({ conversation_id: conv.id, user_id: pin.user_id, is_anonymous: true, anonymous_alias: generateAlias() });
-
-    if (partError) return NextResponse.json({ error: "Failed to add participants" }, { status: 500 });
-
-    // Send system message
-    await supabase.from("messages").insert({
-      conversation_id: conv.id,
-      sender_id: user.id,
-      content: "Started a conversation from a pin",
-      type: "system",
-    });
-
-    return NextResponse.json({ conversation_id: conv.id });
+    return NextResponse.json({ conversation_id: data });
   }
 
   // Group conversation
