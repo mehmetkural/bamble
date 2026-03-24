@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -26,6 +27,25 @@ export default function AppNav({ userId }: { userId: string }) {
   const pathname = usePathname();
   const router = useRouter();
   const isMap = pathname.startsWith("/map");
+  const [totalUnread, setTotalUnread] = useState(0);
+
+  useEffect(() => {
+    async function fetchUnread() {
+      const res = await fetch("/api/conversations");
+      if (!res.ok) return;
+      const data = await res.json();
+      const total = Array.isArray(data) ? data.reduce((sum: number, c: any) => sum + (c.unread_count ?? 0), 0) : 0;
+      setTotalUnread(total);
+    }
+    fetchUnread();
+    // Refresh unread count when navigating away from chat
+    const supabase = createClient();
+    const channel = supabase
+      .channel("nav-unread")
+      .on("postgres_changes", { event: "INSERT", schema: "public", table: "messages" }, fetchUnread)
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [userId]);
 
   async function handleSignOut() {
     const supabase = createClient();
@@ -89,6 +109,8 @@ export default function AppNav({ userId }: { userId: string }) {
           <nav className="space-y-0.5 flex-1">
             {NAV_ITEMS.map(({ href, icon, label }) => {
               const active = pathname.startsWith(href);
+              const isChat = href === "/chat";
+              const badge = isChat && totalUnread > 0 ? (totalUnread > 99 ? "99+" : String(totalUnread)) : null;
               return (
                 <Link key={href} href={href}
                   className={cn(
@@ -98,7 +120,12 @@ export default function AppNav({ userId }: { userId: string }) {
                       : "text-slate-600 hover:bg-slate-200"
                   )}
                   style={{ fontFamily: "var(--font-headline)" }}>
-                  <span className="material-symbols-outlined text-xl" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+                  <span className="relative">
+                    <span className="material-symbols-outlined text-xl" style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+                    {badge && (
+                      <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-indigo-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{badge}</span>
+                    )}
+                  </span>
                   {label}
                 </Link>
               );
@@ -120,10 +147,17 @@ export default function AppNav({ userId }: { userId: string }) {
       <nav className="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center px-6 pb-8 pt-3 bg-white/90 backdrop-blur-2xl rounded-t-[32px] shadow-[0_-8px_30px_rgb(0,0,0,0.04)] z-50">
         {MOBILE_NAV.map(({ href, icon, label }) => {
           const active = pathname.startsWith(href);
+          const isChat = href === "/chat";
+          const badge = isChat && totalUnread > 0 ? (totalUnread > 99 ? "99+" : String(totalUnread)) : null;
           return (
             <Link key={href} href={href} className="flex flex-col items-center gap-0.5">
-              <span className={cn("material-symbols-outlined text-2xl", active ? "text-indigo-600" : "text-slate-400")}
-                style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+              <span className="relative">
+                <span className={cn("material-symbols-outlined text-2xl", active ? "text-indigo-600" : "text-slate-400")}
+                  style={active ? { fontVariationSettings: "'FILL' 1" } : {}}>{icon}</span>
+                {badge && (
+                  <span className="absolute -top-1.5 -right-1.5 min-w-[16px] h-4 px-1 bg-indigo-600 text-white text-[9px] font-bold rounded-full flex items-center justify-center">{badge}</span>
+                )}
+              </span>
               <span className={cn("text-[10px] font-bold uppercase tracking-wide", active ? "text-indigo-600" : "text-slate-400")}
                 style={{ fontFamily: "var(--font-body)" }}>{label}</span>
             </Link>

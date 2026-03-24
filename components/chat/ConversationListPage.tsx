@@ -93,14 +93,11 @@ export default function ConversationListPage({ userId }: { userId: string }) {
                       : initials
                     }
                   </div>
-                  {hasUnread && (
-                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-indigo-600 border-2 border-white rounded-full" />
-                  )}
                 </div>
 
                 <div className="ml-4 flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <span className={`text-base font-bold truncate ${hasUnread ? "text-[#2c3437]" : "text-[#2c3437]"}`} style={{ fontFamily: "var(--font-headline)" }}>
+                    <span className="text-base font-bold truncate text-[#2c3437]" style={{ fontFamily: "var(--font-headline)" }}>
                       {name}
                     </span>
                     {conv.last_message && (
@@ -118,7 +115,11 @@ export default function ConversationListPage({ userId }: { userId: string }) {
                 </div>
 
                 {hasUnread && (
-                  <div className="ml-3 shrink-0 w-2.5 h-2.5 bg-indigo-600 rounded-full" />
+                  <div className="ml-3 shrink-0 min-w-[22px] h-[22px] px-1.5 bg-indigo-600 rounded-full flex items-center justify-center">
+                    <span className="text-[11px] font-bold text-white">
+                      {conv.unread_count > 99 ? "99+" : conv.unread_count}
+                    </span>
+                  </div>
                 )}
               </Link>
             );
