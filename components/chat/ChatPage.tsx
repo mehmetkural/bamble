@@ -180,7 +180,7 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
       </div>
 
       {/* Identity reveal banner */}
-      {otherParticipant?.is_anonymous && !connection && (
+      {otherParticipant?.is_anonymous && connection?.status !== "pending" && connection?.status !== "accepted" && (
         <button
           onClick={async () => {
             const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
