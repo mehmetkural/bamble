@@ -9,7 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   if (!user) redirect("/login");
 
   return (
-    <div className="h-full">
+    <div className="h-full flex flex-col">
       <AppNav userId={user.id} />
       <MainWrapper>{children}</MainWrapper>
     </div>
