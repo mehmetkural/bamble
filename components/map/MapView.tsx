@@ -110,7 +110,7 @@ export default function MapView({ userId }: { userId: string }) {
   return (
     <div className="relative w-full h-full">
       {/* Category filter bar */}
-      <div className="absolute top-3 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
+      <div className="absolute top-8 left-1/2 -translate-x-1/2 z-10 w-full max-w-2xl px-4">
         <CategoryFilter selected={categoryFilter} onChange={setCategoryFilter} />
       </div>
 
