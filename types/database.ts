@@ -9,6 +9,7 @@ export interface Database {}
 // App-level types derived from the DB schema
 export interface PinPublic {
   id: string
+  user_id: string
   category_id: string
   category_slug: string
   category_label: string

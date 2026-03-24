@@ -3,7 +3,7 @@
 import type { PinPublic } from "@/types/database";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { MapPin, MessageCircle } from "lucide-react";
+import { MapPin, MessageCircle, Trash2 } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { toast } from "sonner";
@@ -12,11 +12,28 @@ interface Props {
   pin: PinPublic;
   userId: string;
   onClose: () => void;
+  onDeleted?: () => void;
 }
 
-export default function PinPopup({ pin, userId, onClose }: Props) {
+export default function PinPopup({ pin, userId, onClose, onDeleted }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const isOwner = pin.user_id === userId;
+
+  async function deletePin() {
+    if (!confirm("Bu pini silmek istediğinden emin misin?")) return;
+    setDeleting(true);
+    const res = await fetch(`/api/pins/${pin.id}`, { method: "DELETE" });
+    if (res.ok) {
+      toast.success("Pin silindi.");
+      onClose();
+      onDeleted?.();
+    } else {
+      toast.error("Pin silinemedi.");
+    }
+    setDeleting(false);
+  }
 
   async function startChat() {
     setLoading(true);
@@ -68,15 +85,29 @@ export default function PinPopup({ pin, userId, onClose }: Props) {
         >
           {pin.category_label}
         </Badge>
-        <Button
-          size="sm"
-          className="ml-auto gap-1.5 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
-          onClick={startChat}
-          disabled={loading}
-        >
-          <MessageCircle className="w-3 h-3" />
-          {loading ? "..." : "Chat"}
-        </Button>
+        <div className="ml-auto flex items-center gap-1.5">
+          {isOwner && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
+              onClick={deletePin}
+              disabled={deleting}
+              title="Pini sil"
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+            </Button>
+          )}
+          <Button
+            size="sm"
+            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+            onClick={startChat}
+            disabled={loading}
+          >
+            <MessageCircle className="w-3 h-3" />
+            {loading ? "..." : "Chat"}
+          </Button>
+        </div>
       </div>
     </div>
   );

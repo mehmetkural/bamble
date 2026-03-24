@@ -192,7 +192,7 @@ export default function MapView({ userId }: { userId: string }) {
             onClose={() => setSelectedPin(null)}
             closeOnClick={false}
           >
-            <PinPopup pin={selectedPin} userId={userId} onClose={() => setSelectedPin(null)} />
+            <PinPopup pin={selectedPin} userId={userId} onClose={() => setSelectedPin(null)} onDeleted={handleMoveEnd} />
           </Popup>
         )}
 
