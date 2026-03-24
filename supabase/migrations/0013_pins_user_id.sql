@@ -1,4 +1,5 @@
 -- Add user_id to get_pins_in_bbox return so clients can check ownership
+DROP FUNCTION IF EXISTS get_pins_in_bbox(double precision, double precision, double precision, double precision, text);
 CREATE OR REPLACE FUNCTION get_pins_in_bbox(
   min_lng FLOAT,
   min_lat FLOAT,

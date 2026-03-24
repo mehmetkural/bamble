@@ -172,6 +172,24 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
             <p className="text-xs text-green-500 font-medium">Connected</p>
           )}
         </div>
+        {otherParticipant?.is_anonymous && !connection && (
+          <button
+            onClick={async () => {
+              const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
+              if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
+              else { const err = await res.json(); toast.error(err.error || "Failed"); }
+            }}
+            className="p-2 hover:bg-indigo-50 rounded-full transition-colors shrink-0"
+            title="Reveal identity"
+          >
+            <span className="material-symbols-outlined text-indigo-400 text-xl">visibility</span>
+          </button>
+        )}
+        {connection?.status === "pending" && (
+          <div className="px-2 py-1 rounded-full bg-amber-50 shrink-0">
+            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wide">Pending</span>
+          </div>
+        )}
         <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
           <span className="material-symbols-outlined text-red-400 text-xl">report</span>
         </button>

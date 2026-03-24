@@ -19,10 +19,10 @@ export default function PinPopup({ pin, userId, onClose, onDeleted }: Props) {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const isOwner = pin.user_id === userId;
 
   async function deletePin() {
-    if (!confirm("Bu pini silmek istediğinden emin misin?")) return;
     setDeleting(true);
     const res = await fetch(`/api/pins/${pin.id}`, { method: "DELETE" });
     if (res.ok) {
@@ -33,6 +33,7 @@ export default function PinPopup({ pin, userId, onClose, onDeleted }: Props) {
       toast.error("Pin silinemedi.");
     }
     setDeleting(false);
+    setConfirmDelete(false);
   }
 
   async function startChat() {
@@ -86,27 +87,37 @@ export default function PinPopup({ pin, userId, onClose, onDeleted }: Props) {
           {pin.category_label}
         </Badge>
         <div className="ml-auto flex items-center gap-1.5">
-          {isOwner && (
+          {isOwner && !confirmDelete && (
             <Button
               size="sm"
               variant="ghost"
               className="h-7 w-7 p-0 text-red-400 hover:text-red-600 hover:bg-red-50"
-              onClick={deletePin}
-              disabled={deleting}
+              onClick={() => setConfirmDelete(true)}
               title="Pini sil"
             >
               <Trash2 className="w-3.5 h-3.5" />
             </Button>
           )}
-          <Button
-            size="sm"
-            className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
-            onClick={startChat}
-            disabled={loading}
-          >
-            <MessageCircle className="w-3 h-3" />
-            {loading ? "..." : "Chat"}
-          </Button>
+          {!confirmDelete && (
+            <Button
+              size="sm"
+              className="gap-1.5 bg-indigo-600 hover:bg-indigo-700 h-7 text-xs"
+              onClick={startChat}
+              disabled={loading}
+            >
+              <MessageCircle className="w-3 h-3" />
+              {loading ? "..." : "Chat"}
+            </Button>
+          )}
+          {confirmDelete && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-[#596064]">Emin misin?</span>
+              <Button size="sm" variant="ghost" className="h-7 px-2 text-xs text-slate-500" onClick={() => setConfirmDelete(false)}>İptal</Button>
+              <Button size="sm" className="h-7 px-2 text-xs bg-red-500 hover:bg-red-600" onClick={deletePin} disabled={deleting}>
+                {deleting ? "..." : "Sil"}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </div>
