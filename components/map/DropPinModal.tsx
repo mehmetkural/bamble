@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { CATEGORIES } from "@/lib/categories";
 import { cn } from "@/lib/utils";
@@ -14,6 +14,14 @@ interface Props {
   userId: string;
 }
 
+interface GeoSuggestion {
+  id: string;
+  place_name: string;
+  center: [number, number]; // [lng, lat]
+}
+
+const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
+
 export default function DropPinModal({ open, onClose, initialLocation, onPinDropped, userId }: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -22,6 +30,11 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
   const [lat, setLat] = useState(initialLocation?.lat?.toFixed(6) ?? "");
   const [lng, setLng] = useState(initialLocation?.lng?.toFixed(6) ?? "");
   const [loading, setLoading] = useState(false);
+
+  const [addressQuery, setAddressQuery] = useState("");
+  const [suggestions, setSuggestions] = useState<GeoSuggestion[]>([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
     if (open && initialLocation) {
@@ -33,10 +46,39 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
     }
   }, [open, initialLocation]);
 
+  const searchAddress = useCallback(async (query: string) => {
+    if (query.length < 3) { setSuggestions([]); return; }
+    const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&proximity=10.9028,49.8988&bbox=10.50,49.60,11.30,50.20&language=de,en&limit=5`;
+    const res = await fetch(url);
+    if (!res.ok) return;
+    const data = await res.json();
+    setSuggestions(data.features?.map((f: any) => ({
+      id: f.id,
+      place_name: f.place_name,
+      center: f.center,
+    })) ?? []);
+    setShowSuggestions(true);
+  }, []);
+
+  function handleAddressChange(value: string) {
+    setAddressQuery(value);
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => searchAddress(value), 300);
+  }
+
+  function selectSuggestion(s: GeoSuggestion) {
+    setLng(s.center[0].toFixed(6));
+    setLat(s.center[1].toFixed(6));
+    setAddressQuery(s.place_name);
+    if (!locationName) setLocationName(s.place_name.split(",")[0]);
+    setSuggestions([]);
+    setShowSuggestions(false);
+  }
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!lat || !lng) {
-      toast.error("Double-click on the map to set your location.");
+      toast.error("Harita üzerinde çift tıklayın veya adres arayın.");
       return;
     }
     setLoading(true);
@@ -58,6 +100,7 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
       setTitle("");
       setDescription("");
       setLocationName("");
+      setAddressQuery("");
       setCategorySlug("other");
     } else {
       const err = await res.json();
@@ -86,13 +129,49 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                   </span>
                 </div>
               ) : (
-                <p className="text-xs text-[#596064] mt-1.5">Double-click the map to set location</p>
+                <p className="text-xs text-[#596064] mt-1.5">Adres girin veya haritada çift tıklayın</p>
               )}
             </div>
           </div>
 
           <form onSubmit={handleSubmit}>
-            <div className="px-7 pb-6 space-y-6">
+            <div className="px-7 pb-6 space-y-5">
+              {/* Address search */}
+              <div className="relative">
+                <div className="flex items-center gap-2 bg-[#f0f4f7] rounded-xl px-3 py-2.5">
+                  <span className="material-symbols-outlined text-indigo-400 text-lg shrink-0">search</span>
+                  <input
+                    className="flex-1 bg-transparent text-sm text-[#2c3437] placeholder:text-[#acb3b7] outline-none border-none"
+                    placeholder="Adres ara (örn. Maxplatz, Bamberg)"
+                    value={addressQuery}
+                    onChange={(e) => handleAddressChange(e.target.value)}
+                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    autoComplete="off"
+                  />
+                  {addressQuery && (
+                    <button type="button" onClick={() => { setAddressQuery(""); setSuggestions([]); }}
+                      className="text-[#acb3b7] hover:text-[#596064]">
+                      <span className="material-symbols-outlined text-sm">close</span>
+                    </button>
+                  )}
+                </div>
+                {showSuggestions && suggestions.length > 0 && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-white rounded-xl shadow-xl border border-slate-100 z-50 overflow-hidden">
+                    {suggestions.map((s) => (
+                      <button
+                        key={s.id}
+                        type="button"
+                        onClick={() => selectSuggestion(s)}
+                        className="w-full flex items-start gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors text-left border-b border-slate-50 last:border-0"
+                      >
+                        <span className="material-symbols-outlined text-indigo-400 text-base mt-0.5 shrink-0">location_on</span>
+                        <span className="text-sm text-[#2c3437] leading-snug">{s.place_name}</span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               {/* Category picker */}
               <div>
                 <p className="text-xs font-bold text-[#596064] mb-3 uppercase tracking-widest">Choose Your Vibe</p>
@@ -156,31 +235,13 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                   onChange={(e) => setLocationName(e.target.value)}
                 />
               </div>
-
-              {/* Coords */}
-              <div className="grid grid-cols-2 gap-3">
-                <input
-                  className="bg-[#f0f4f7] rounded-xl px-3 py-2.5 text-sm text-[#2c3437] placeholder:text-[#acb3b7] border-none focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                  placeholder="Latitude"
-                  value={lat}
-                  onChange={(e) => setLat(e.target.value)}
-                  required
-                />
-                <input
-                  className="bg-[#f0f4f7] rounded-xl px-3 py-2.5 text-sm text-[#2c3437] placeholder:text-[#acb3b7] border-none focus:ring-2 focus:ring-indigo-500/20 outline-none"
-                  placeholder="Longitude"
-                  value={lng}
-                  onChange={(e) => setLng(e.target.value)}
-                  required
-                />
-              </div>
             </div>
 
             {/* Footer */}
             <div className="px-7 pb-7 pt-2">
               <button
                 type="submit"
-                disabled={loading}
+                disabled={loading || !lat || !lng}
                 className="w-full py-4 bg-gradient-to-br from-indigo-600 to-indigo-500 text-white font-bold text-base rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 active:scale-[0.98] transition-all disabled:opacity-50"
                 style={{ fontFamily: "var(--font-headline)" }}
               >
