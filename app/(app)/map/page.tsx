@@ -5,5 +5,9 @@ export default async function MapPage() {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
 
-  return <MapView userId={user!.id} />;
+  return (
+    <div className="w-full h-full max-h-[480px]">
+      <MapView userId={user!.id} />
+    </div>
+  );
 }

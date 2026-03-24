@@ -30,9 +30,9 @@ const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
 export default function MapView({ userId }: { userId: string }) {
   const [viewState, setViewState] = useState<ViewState>({
-    longitude: 10.0,
-    latitude: 51.0,
-    zoom: 5,
+    longitude: 10.9028,
+    latitude: 49.8988,
+    zoom: 13,
   });
   const [pins, setPins] = useState<PinPublic[]>([]);
   const [groupPins, setGroupPins] = useState<GroupPinPublic[]>([]);
@@ -137,6 +137,7 @@ export default function MapView({ userId }: { userId: string }) {
         mapStyle="mapbox://styles/mapbox/light-v11"
         style={{ width: "100%", height: "100%" }}
         doubleClickZoom={false}
+        maxBounds={[[10.80, 49.82], [11.05, 50.02]]}
       >
         <GeolocateControl position="bottom-left" trackUserLocation />
         <NavigationControl position="bottom-left" />
