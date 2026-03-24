@@ -1,17 +1,17 @@
 import { createClient } from "@/lib/supabase/server";
 import { redirect } from "next/navigation";
 import AppNav from "@/components/shared/AppNav";
+import MainWrapper from "@/components/shared/MainWrapper";
 
 export default async function AppLayout({ children }: { children: React.ReactNode }) {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
-
   if (!user) redirect("/login");
 
   return (
-    <div className="h-full flex flex-col">
+    <div className="h-full">
       <AppNav userId={user.id} />
-      <main className="flex-1 overflow-hidden pt-[56px] pb-[88px] md:pb-0">{children}</main>
+      <MainWrapper>{children}</MainWrapper>
     </div>
   );
 }

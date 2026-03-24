@@ -2,9 +2,6 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Users, Plus, MapPin } from "lucide-react";
-import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import CreateGroupModal from "./CreateGroupModal";
 import { toast } from "sonner";
 
@@ -51,96 +48,59 @@ export default function GroupsClientPage({ userId }: { userId: string }) {
     }
   }
 
-  if (loading) {
-    return <div className="flex items-center justify-center h-full text-gray-400">Loading groups...</div>;
-  }
-
   return (
-    <div className="max-w-2xl mx-auto">
-      <div className="flex items-center justify-between p-4 border-b">
-        <h1 className="text-xl font-semibold text-gray-900">Groups</h1>
-        <Button
-          onClick={() => setCreateOpen(true)}
-          size="sm"
-          className="gap-2 bg-indigo-600 hover:bg-indigo-700"
-        >
-          <Plus className="w-4 h-4" />
-          Create Group
-        </Button>
+    <div className="px-6 md:px-10 pt-6 pb-24 max-w-5xl mx-auto">
+      {/* Header */}
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-[#2c3437] mb-2" style={{ fontFamily: "var(--font-headline)" }}>Discover Groups</h1>
+        <p className="text-[#596064]">See who's gathering around you.</p>
       </div>
 
-      {groups.length === 0 ? (
-        <div className="flex flex-col items-center justify-center h-64 text-gray-400 gap-3">
-          <Users className="w-12 h-12 opacity-30" />
-          <p className="text-sm">No groups yet</p>
-          <p className="text-xs text-gray-300">Create one after connecting with people on the map!</p>
+      {/* Create button */}
+      <button onClick={() => setCreateOpen(true)}
+        className="fixed bottom-28 right-6 md:bottom-8 z-40 w-14 h-14 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-xl hover:scale-110 active:scale-90 transition-all">
+        <span className="material-symbols-outlined text-2xl">add</span>
+      </button>
+
+      {loading ? (
+        <div className="flex items-center justify-center h-48 text-[#596064]">Loading groups...</div>
+      ) : groups.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
+          <span className="material-symbols-outlined text-5xl opacity-30">groups</span>
+          <p className="text-sm font-medium">No groups yet</p>
+          <p className="text-xs text-center">Create one after connecting with people on the map!</p>
         </div>
       ) : (
-        <div className="divide-y">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
           {groups.map((group) => {
             const memberCount = group.group_members?.[0]?.count ?? 0;
             const isJoined = myGroupIds.has(group.id);
-
             return (
-              <div
-                key={group.id}
-                className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-              >
-                <div
-                  className="w-10 h-10 rounded-full flex items-center justify-center text-lg shrink-0"
-                  style={{ backgroundColor: group.categories?.color + "20" }}
-                >
-                  {group.categories?.icon}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2">
-                    <p className="font-medium text-sm text-gray-900 truncate">{group.name}</p>
-                    <Badge
-                      variant="secondary"
-                      className="text-xs shrink-0"
-                      style={{
-                        backgroundColor: group.categories?.color + "15",
-                        color: group.categories?.color,
-                      }}
-                    >
-                      {group.categories?.label}
-                    </Badge>
+              <div key={group.id} className="bg-white p-6 rounded-2xl hover:-translate-y-1 transition-transform duration-300 cursor-pointer"
+                onClick={() => isJoined ? router.push(`/groups/${group.id}`) : undefined}>
+                <div className="flex items-center justify-between mb-5">
+                  <div className="w-11 h-11 rounded-full flex items-center justify-center text-xl"
+                    style={{ backgroundColor: group.categories?.color + "20" }}>
+                    {group.categories?.icon}
                   </div>
-                  {group.description && (
-                    <p className="text-xs text-gray-500 truncate mt-0.5">{group.description}</p>
-                  )}
-                  <div className="flex items-center gap-3 mt-1">
-                    <span className="flex items-center gap-1 text-xs text-gray-400">
-                      <Users className="w-3 h-3" />
-                      {memberCount} member{memberCount !== 1 ? "s" : ""}
-                    </span>
-                    {group.location_name && (
-                      <span className="flex items-center gap-1 text-xs text-gray-400">
-                        <MapPin className="w-3 h-3" />
-                        {group.location_name}
-                      </span>
-                    )}
-                  </div>
+                  <span className="text-xs text-[#596064]">{group.location_name || "Nearby"}</span>
                 </div>
-                <Button
-                  size="sm"
-                  variant={isJoined ? "secondary" : "default"}
-                  className={`shrink-0 ${!isJoined ? "bg-indigo-600 hover:bg-indigo-700" : ""}`}
-                  onClick={() => isJoined ? router.push(`/groups/${group.id}`) : joinGroup(group.id)}
-                >
-                  {isJoined ? "View" : "Join"}
-                </Button>
+                <h3 className="font-bold text-[#2c3437] text-lg mb-1 truncate" style={{ fontFamily: "var(--font-headline)" }}>{group.name}</h3>
+                {group.description && <p className="text-[#596064] text-sm mb-5 line-clamp-2">{group.description}</p>}
+                <div className="flex items-center justify-between mt-auto">
+                  <span className="text-xs font-bold text-indigo-600 uppercase">{memberCount} member{memberCount !== 1 ? "s" : ""}</span>
+                  <button onClick={(e) => { e.stopPropagation(); isJoined ? router.push(`/groups/${group.id}`) : joinGroup(group.id); }}
+                    className={`px-5 py-1.5 rounded-xl text-sm font-bold transition-colors ${isJoined ? "bg-[#eaeff2] text-[#2c3437] hover:bg-[#dce4e8]" : "bg-indigo-600 text-white hover:bg-indigo-700 shadow-sm"}`}>
+                    {isJoined ? "View" : "Join"}
+                  </button>
+                </div>
               </div>
             );
           })}
         </div>
       )}
 
-      <CreateGroupModal
-        open={createOpen}
-        onClose={() => setCreateOpen(false)}
-        onCreated={() => { fetchGroups(); setCreateOpen(false); }}
-      />
+      <CreateGroupModal open={createOpen} onClose={() => setCreateOpen(false)} onCreated={() => { fetchGroups(); setCreateOpen(false); }} />
     </div>
   );
 }

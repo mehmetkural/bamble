@@ -2,9 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Send, ArrowLeft, UserCheck, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
 import { formatDistanceToNow } from "date-fns";
@@ -154,37 +151,38 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
   const showConnectionPrompt = textMessages.length >= 3 && !connection && otherParticipant;
 
   return (
-    <div className="flex flex-col h-full max-w-2xl mx-auto border-x border-gray-100">
+    <div className="flex flex-col h-full bg-gradient-to-br from-purple-50/20 via-[#f7f9fb] to-[#f7f9fb]">
       {/* Header */}
-      <div className="flex items-center gap-3 p-4 border-b bg-white shrink-0">
-        <Button variant="ghost" size="icon" onClick={() => router.push("/chat")} className="shrink-0">
-          <ArrowLeft className="w-4 h-4" />
-        </Button>
+      <div className="flex items-center gap-3 px-5 py-3 bg-white/80 backdrop-blur-xl border-b border-slate-100 shrink-0">
+        <button onClick={() => router.push("/chat")} className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <span className="material-symbols-outlined text-[#596064]">arrow_back</span>
+        </button>
+        <div className="w-10 h-10 rounded-full bg-[#fdd2fd] flex items-center justify-center shrink-0">
+          <span className="text-sm font-bold text-[#654568]" style={{ fontFamily: "var(--font-headline)" }}>
+            {otherName.charAt(0)}
+          </span>
+        </div>
         <div className="flex-1 min-w-0">
-          <p className="font-semibold text-gray-900 truncate">{otherName}</p>
-          {otherParticipant?.is_anonymous && (
-            <div className="flex items-center gap-1 text-xs text-gray-400">
-              <EyeOff className="w-3 h-3" />
-              <span>Anonymous</span>
-            </div>
-          )}
-          {!otherParticipant?.is_anonymous && (
-            <div className="flex items-center gap-1 text-xs text-green-500">
-              <UserCheck className="w-3 h-3" />
-              <span>Connected</span>
-            </div>
+          <p className="font-bold text-[#2c3437] truncate" style={{ fontFamily: "var(--font-headline)" }}>
+            {otherName} {otherParticipant?.is_anonymous ? "(Anonymous)" : ""}
+          </p>
+          {otherParticipant?.is_anonymous ? (
+            <p className="text-xs text-[#596064]">Privacy Mode Active</p>
+          ) : (
+            <p className="text-xs text-green-500 font-medium">Connected</p>
           )}
         </div>
+        <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
+          <span className="material-symbols-outlined text-red-400 text-xl">report</span>
+        </button>
       </div>
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
-            Loading messages...
-          </div>
+          <div className="flex items-center justify-center h-full text-[#596064] text-sm">Loading...</div>
         ) : messages.length === 0 ? (
-          <div className="flex items-center justify-center h-full text-gray-400 text-sm">
+          <div className="flex items-center justify-center h-full text-[#596064] text-sm">
             Say hello! Remember, both of you are anonymous.
           </div>
         ) : (
@@ -192,116 +190,79 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
             if (msg.type === "system") {
               return (
                 <div key={msg.id} className="flex justify-center">
-                  <span className="text-xs text-gray-400 bg-gray-100 px-3 py-1 rounded-full">
+                  <span className="px-4 py-1 rounded-full bg-[#e3e9ed] text-[#596064] text-[10px] font-bold uppercase tracking-widest">
                     {msg.content}
                   </span>
                 </div>
               );
             }
-
             if (msg.type === "connection_request") {
               const connId = msg.metadata?.connection_id;
               const isIncoming = msg.metadata?.recipient_id === userId;
               return (
-                <ConnectionRequestCard
-                  key={msg.id}
-                  connectionId={connId}
-                  isIncoming={isIncoming}
-                  status={connection?.status}
+                <ConnectionRequestCard key={msg.id} connectionId={connId} isIncoming={isIncoming} status={connection?.status}
                   onAction={async (action) => {
-                    const res = await fetch(`/api/connections/${connId}`, {
-                      method: "PATCH",
-                      headers: { "Content-Type": "application/json" },
-                      body: JSON.stringify({ action }),
-                    });
-                    if (res.ok) {
-                      if (action === "accept") {
-                        toast.success("Connected! Identities revealed.");
-                        fetchParticipants();
-                        fetchConnection();
-                        fetchMessages();
-                      } else {
-                        toast.info("Request declined");
-                        fetchConnection();
-                      }
-                    }
-                  }}
-                />
+                    const res = await fetch(`/api/connections/${connId}`, { method: "PATCH", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ action }) });
+                    if (res.ok) { if (action === "accept") { toast.success("Connected! Identities revealed."); fetchParticipants(); fetchConnection(); fetchMessages(); } else { toast.info("Request declined"); fetchConnection(); } }
+                  }} />
               );
             }
-
             return (
-              <div key={msg.id} className={`flex ${msg.sender_is_me ? "justify-end" : "justify-start"}`}>
-                <div className={`max-w-[75%] ${msg.sender_is_me ? "items-end" : "items-start"} flex flex-col gap-0.5`}>
-                  {!msg.sender_is_me && (
-                    <span className="text-xs text-gray-400 px-1">
-                      {msg.sender_is_anonymous ? msg.sender_alias : msg.sender_profile?.display_name || msg.sender_profile?.username}
-                    </span>
-                  )}
-                  <div
-                    className={`px-4 py-2 rounded-2xl text-sm ${
-                      msg.sender_is_me
-                        ? "bg-indigo-600 text-white rounded-br-sm"
-                        : "bg-gray-100 text-gray-900 rounded-bl-sm"
-                    }`}
-                  >
-                    {msg.content}
-                  </div>
-                  <span className="text-xs text-gray-300 px-1">
-                    {formatDistanceToNow(new Date(msg.created_at), { addSuffix: true })}
-                  </span>
+              <div key={msg.id} className={`flex flex-col ${msg.sender_is_me ? "items-end" : "items-start"} max-w-[80%] ${msg.sender_is_me ? "ml-auto" : ""} gap-1`}>
+                <div className={`px-5 py-3 font-medium leading-relaxed shadow-sm ${
+                  msg.sender_is_me
+                    ? "bg-indigo-600 text-white rounded-t-xl rounded-bl-xl rounded-br-sm"
+                    : "bg-[#e3e9ed] text-[#2c3437] rounded-t-xl rounded-br-xl rounded-bl-sm"
+                }`}>
+                  {msg.content}
                 </div>
+                <span className="text-[10px] text-[#596064] font-bold px-1 uppercase">
+                  {formatDistanceToNow(new Date(msg.created_at), { addSuffix: false })} ago
+                </span>
               </div>
             );
           })
         )}
 
-        {/* Connection prompt */}
         {showConnectionPrompt && !connection && (
           <div className="flex justify-center py-2">
-            <button
-              onClick={async () => {
+            <div className="bg-white border-2 border-dashed border-indigo-200 rounded-2xl p-6 text-center max-w-xs">
+              <div className="w-12 h-12 rounded-full bg-indigo-50 flex items-center justify-center mx-auto mb-3">
+                <span className="material-symbols-outlined text-indigo-600 text-2xl">visibility</span>
+              </div>
+              <p className="font-bold text-[#2c3437] text-sm mb-1" style={{ fontFamily: "var(--font-headline)" }}>Curious who you're talking to?</p>
+              <p className="text-xs text-[#596064] mb-4">Both must agree to reveal identities.</p>
+              <button onClick={async () => {
                 if (!otherParticipant) return;
-                const res = await fetch("/api/connections", {
-                  method: "POST",
-                  headers: { "Content-Type": "application/json" },
-                  body: JSON.stringify({
-                    recipient_id: otherParticipant.user_id,
-                    conversation_id: conversationId,
-                  }),
-                });
-                if (res.ok) {
-                  toast.success("Connection request sent!");
-                  fetchConnection();
-                  fetchMessages();
-                } else {
-                  const err = await res.json();
-                  toast.error(err.error || "Failed to send request");
-                }
-              }}
-              className="text-xs text-indigo-600 border border-indigo-200 bg-indigo-50 hover:bg-indigo-100 px-4 py-2 rounded-full transition-colors"
-            >
-              <UserCheck className="w-3 h-3 inline mr-1" />
-              Reveal your identity to connect
-            </button>
+                const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
+                if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); } else { const err = await res.json(); toast.error(err.error || "Failed"); }
+              }} className="bg-indigo-600 text-white px-6 py-2 rounded-xl text-sm font-bold hover:bg-indigo-700 transition-colors">
+                Request Identity Reveal
+              </button>
+            </div>
           </div>
         )}
-
         <div ref={bottomRef} />
       </div>
 
       {/* Input */}
-      <form onSubmit={sendMessage} className="flex items-center gap-2 p-4 border-t bg-white shrink-0">
-        <Input
-          value={input}
-          onChange={(e) => setInput(e.target.value)}
-          placeholder="Type a message..."
-          className="flex-1"
-          autoComplete="off"
-        />
-        <Button type="submit" disabled={!input.trim() || sending} size="icon" className="bg-indigo-600 hover:bg-indigo-700 shrink-0">
-          <Send className="w-4 h-4" />
-        </Button>
+      <form onSubmit={sendMessage} className="bg-white/80 backdrop-blur-xl border-t border-slate-100 px-5 py-4 shrink-0">
+        <div className="flex items-end gap-3 max-w-3xl mx-auto">
+          <div className="flex-1 relative">
+            <input
+              value={input}
+              onChange={(e) => setInput(e.target.value)}
+              placeholder="Type a message..."
+              className="w-full bg-transparent border-0 border-b-2 border-[#dce4e8] focus:border-indigo-500 focus:ring-0 py-2 text-base text-[#2c3437] placeholder:text-[#acb3b7] outline-none transition-colors"
+              autoComplete="off"
+              onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendMessage(e as any); } }}
+            />
+          </div>
+          <button type="submit" disabled={!input.trim() || sending}
+            className="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center text-white shadow-lg hover:scale-110 active:scale-90 transition-all disabled:opacity-40">
+            <span className="material-symbols-outlined text-xl" style={{ fontVariationSettings: "'FILL' 1" }}>send</span>
+          </button>
+        </div>
       </form>
     </div>
   );
