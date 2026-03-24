@@ -4,7 +4,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
-import type { RadioMessage, RadioFeedItem, PinPublic } from "@/types/database";
+import type { RadioMessage, PinPublic } from "@/types/database";
 import RadioPinCard from "./RadioPinCard";
 
 export default function RadioFeedPage({ userId }: { userId: string }) {
@@ -65,12 +65,6 @@ export default function RadioFeedPage({ userId }: { userId: string }) {
     setSending(false);
   }
 
-  // Merge messages and pins into a single feed sorted by created_at
-  const feed: RadioFeedItem[] = [
-    ...messages.map((m): RadioFeedItem => ({ kind: "message", data: m })),
-    ...pins.map((p): RadioFeedItem => ({ kind: "pin", data: p })),
-  ].sort((a, b) => new Date(a.data.created_at).getTime() - new Date(b.data.created_at).getTime());
-
   return (
     <div className="flex flex-col h-full bg-gradient-to-br from-purple-50/20 via-[#f7f9fb] to-[#f7f9fb]">
       {/* Header */}
@@ -88,25 +82,34 @@ export default function RadioFeedPage({ userId }: { userId: string }) {
         </div>
       </div>
 
-      {/* Feed */}
+      {/* Pinned active pins — always visible at top */}
+      {pins.length > 0 && (
+        <div className="shrink-0 border-b border-slate-100 overflow-x-auto" style={{ scrollbarWidth: "none" }}>
+          <div className="flex gap-3 px-4 py-3" style={{ width: "max-content" }}>
+            {pins.map((pin) => (
+              <div key={pin.id} className="w-72 shrink-0">
+                <RadioPinCard pin={pin} />
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Messages feed */}
       <div className="flex-1 overflow-y-auto">
         <div className="flex flex-col justify-end min-h-full py-4 space-y-1">
         {loading ? (
           <div className="flex items-center justify-center py-20 text-[#596064] text-sm">Loading...</div>
-        ) : feed.length === 0 ? (
+        ) : messages.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#596064]">
             <span className="material-symbols-outlined text-5xl text-slate-300">radio</span>
             <p className="text-sm font-medium">No activity yet — say something to Bamberg!</p>
           </div>
         ) : (
-          feed.map((item) => {
-            if (item.kind === "pin") {
-              return <RadioPinCard key={`pin-${item.data.id}`} pin={item.data} />;
-            }
-            const msg = item.data as RadioMessage;
+          messages.map((msg) => {
             return (
               <div
-                key={`msg-${msg.id}`}
+                key={msg.id}
                 className={`flex flex-col px-4 ${msg.is_mine ? "items-end" : "items-start"}`}
               >
                 {!msg.is_mine && (
