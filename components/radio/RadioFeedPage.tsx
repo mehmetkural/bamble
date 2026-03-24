@@ -57,8 +57,10 @@ export default function RadioFeedPage({ userId }: { userId: string }) {
     });
     if (res.ok) {
       setInput("");
+      await fetchMessages();
     } else {
-      toast.error("Failed to send message");
+      const err = await res.json().catch(() => ({}));
+      toast.error(err.error || "Failed to send message");
     }
     setSending(false);
   }
