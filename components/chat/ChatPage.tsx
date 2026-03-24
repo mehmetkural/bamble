@@ -166,30 +166,33 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
           <p className="font-bold text-[#2c3437] truncate" style={{ fontFamily: "var(--font-headline)" }}>
             {otherName} {otherParticipant?.is_anonymous ? "(Anonymous)" : ""}
           </p>
-          {otherParticipant?.is_anonymous && !connection && (
-            <button
-              onClick={async () => {
-                const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
-                if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
-                else { const err = await res.json(); toast.error(err.error || "Failed"); }
-              }}
-              className="flex items-center gap-1 mt-0.5 text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
-            >
-              <span className="material-symbols-outlined text-sm">visibility</span>
-              Reveal identity
-            </button>
-          )}
-          {connection?.status === "pending" && (
-            <p className="text-xs text-amber-500 font-medium mt-0.5">Reveal request pending…</p>
-          )}
-          {!otherParticipant?.is_anonymous && (
+          {!otherParticipant?.is_anonymous ? (
             <p className="text-xs text-green-500 font-medium">Connected</p>
+          ) : connection?.status === "pending" ? (
+            <p className="text-xs text-amber-500 font-medium mt-0.5">Reveal request pending…</p>
+          ) : (
+            <p className="text-xs text-[#596064]">Privacy Mode Active</p>
           )}
         </div>
         <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
           <span className="material-symbols-outlined text-slate-400 text-xl">report</span>
         </button>
       </div>
+
+      {/* Identity reveal banner */}
+      {otherParticipant?.is_anonymous && !connection && (
+        <button
+          onClick={async () => {
+            const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
+            if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
+            else { const err = await res.json(); toast.error(err.error || "Failed"); }
+          }}
+          className="shrink-0 w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-50 border-b border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors"
+        >
+          <span className="material-symbols-outlined text-indigo-500 text-base">visibility</span>
+          <span className="text-sm font-semibold text-indigo-600">Reveal identity</span>
+        </button>
+      )}
 
       {/* Messages */}
       <div className="flex-1 overflow-y-auto px-5 py-6 space-y-6">
