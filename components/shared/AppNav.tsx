@@ -10,6 +10,7 @@ const NAV_ITEMS = [
   { href: "/map",     icon: "explore",        label: "Discovery"     },
   { href: "/chat",    icon: "chat_bubble",    label: "Conversations" },
   { href: "/groups",  icon: "group",          label: "Communities"   },
+  { href: "/radio",   icon: "radio",          label: "Radio"         },
   { href: "/profile", icon: "person",         label: "Settings"      },
 ];
 
@@ -17,6 +18,7 @@ const MOBILE_NAV = [
   { href: "/map",     icon: "map",            label: "Map"     },
   { href: "/chat",    icon: "forum",          label: "Chats"   },
   { href: "/groups",  icon: "groups",         label: "Groups"  },
+  { href: "/radio",   icon: "radio",          label: "Radio"   },
   { href: "/profile", icon: "account_circle", label: "Profile" },
 ];
 
@@ -48,7 +50,7 @@ export default function AppNav({ userId }: { userId: string }) {
             {/* Desktop inline nav (only on map page where sidebar is hidden) */}
             {isMap && (
               <nav className="hidden md:flex items-center gap-2">
-                {[{ href: "/map", label: "Discovery" }, { href: "/chat", label: "Conversations" }, { href: "/groups", label: "Communities" }].map(({ href, label }) => (
+                {[{ href: "/map", label: "Discovery" }, { href: "/chat", label: "Conversations" }, { href: "/groups", label: "Communities" }, { href: "/radio", label: "Radio" }].map(({ href, label }) => (
                   <Link key={href} href={href}
                     className={cn("px-4 py-1 rounded-lg text-sm font-semibold transition-colors", pathname.startsWith(href) ? "text-indigo-600 border-b-2 border-indigo-600" : "text-slate-500 hover:bg-slate-100")}
                     style={{ fontFamily: "var(--font-body)" }}>

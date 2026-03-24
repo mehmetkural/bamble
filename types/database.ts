@@ -88,3 +88,16 @@ export interface MessageWithSender {
     avatar_url: string | null
   } | null
 }
+
+export interface RadioMessage {
+  id: string
+  sender_id: string
+  anon_alias: string
+  content: string
+  created_at: string
+  is_mine: boolean
+}
+
+export type RadioFeedItem =
+  | { kind: 'message'; data: RadioMessage }
+  | { kind: 'pin'; data: PinPublic }
