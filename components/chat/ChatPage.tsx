@@ -166,32 +166,28 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
           <p className="font-bold text-[#2c3437] truncate" style={{ fontFamily: "var(--font-headline)" }}>
             {otherName} {otherParticipant?.is_anonymous ? "(Anonymous)" : ""}
           </p>
-          {otherParticipant?.is_anonymous ? (
-            <p className="text-xs text-[#596064]">Privacy Mode Active</p>
-          ) : (
+          {otherParticipant?.is_anonymous && !connection && (
+            <button
+              onClick={async () => {
+                const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
+                if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
+                else { const err = await res.json(); toast.error(err.error || "Failed"); }
+              }}
+              className="flex items-center gap-1 mt-0.5 text-xs text-indigo-500 hover:text-indigo-700 transition-colors"
+            >
+              <span className="material-symbols-outlined text-sm">visibility</span>
+              Reveal identity
+            </button>
+          )}
+          {connection?.status === "pending" && (
+            <p className="text-xs text-amber-500 font-medium mt-0.5">Reveal request pending…</p>
+          )}
+          {!otherParticipant?.is_anonymous && (
             <p className="text-xs text-green-500 font-medium">Connected</p>
           )}
         </div>
-        {otherParticipant?.is_anonymous && !connection && (
-          <button
-            onClick={async () => {
-              const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
-              if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
-              else { const err = await res.json(); toast.error(err.error || "Failed"); }
-            }}
-            className="p-2 hover:bg-indigo-50 rounded-full transition-colors shrink-0"
-            title="Reveal identity"
-          >
-            <span className="material-symbols-outlined text-indigo-400 text-xl">visibility</span>
-          </button>
-        )}
-        {connection?.status === "pending" && (
-          <div className="px-2 py-1 rounded-full bg-amber-50 shrink-0">
-            <span className="text-[10px] font-bold text-amber-500 uppercase tracking-wide">Pending</span>
-          </div>
-        )}
         <button className="p-2 hover:bg-slate-100 rounded-full transition-colors">
-          <span className="material-symbols-outlined text-red-400 text-xl">report</span>
+          <span className="material-symbols-outlined text-slate-400 text-xl">report</span>
         </button>
       </div>
 
