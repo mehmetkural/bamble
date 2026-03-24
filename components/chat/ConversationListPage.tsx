@@ -2,9 +2,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { MessageCircle, Users } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
-import { Badge } from "@/components/ui/badge";
 
 interface Conversation {
   id: string;
@@ -17,6 +15,20 @@ interface Conversation {
   } | null;
   last_message: { content: string; created_at: string; type: string } | null;
   unread_count: number;
+}
+
+const AVATAR_COLORS = [
+  "bg-indigo-100 text-indigo-600",
+  "bg-amber-100 text-amber-600",
+  "bg-emerald-100 text-emerald-600",
+  "bg-rose-100 text-rose-600",
+  "bg-slate-200 text-slate-600",
+  "bg-purple-100 text-purple-600",
+];
+
+function getAvatarColor(name: string) {
+  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
+  return AVATAR_COLORS[idx];
 }
 
 export default function ConversationListPage({ userId }: { userId: string }) {
@@ -34,75 +46,91 @@ export default function ConversationListPage({ userId }: { userId: string }) {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
+      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
         Loading chats...
       </div>
     );
   }
 
-  if (conversations.length === 0) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-gray-400 gap-3">
-        <MessageCircle className="w-12 h-12 opacity-30" />
-        <p className="text-sm">No chats yet</p>
-        <p className="text-xs text-gray-300">Browse the map and tap a pin to start chatting</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-lg mx-auto">
-      <div className="p-4 border-b">
-        <h1 className="text-xl font-semibold text-gray-900">Chats</h1>
+    <div className="max-w-2xl mx-auto px-6 md:px-10 pt-6">
+      <div className="flex justify-between items-end mb-8">
+        <div>
+          <h2 className="text-3xl font-extrabold tracking-tight text-[#2c3437] mb-1" style={{ fontFamily: "var(--font-headline)" }}>
+            Conversations
+          </h2>
+          <p className="text-[#596064] text-sm">Connect with the shadows around you.</p>
+        </div>
       </div>
-      <div className="divide-y">
-        {conversations.map((conv) => {
-          const other = conv.other_participant;
-          const name = other?.is_anonymous === false && other?.profiles
-            ? other.profiles.display_name || other.profiles.username
-            : other?.anonymous_alias ?? "Unknown";
 
-          return (
-            <Link
-              key={conv.id}
-              href={`/chat/${conv.id}`}
-              className="flex items-center gap-3 p-4 hover:bg-gray-50 transition-colors"
-            >
-              <div className="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center shrink-0">
-                {conv.type === "group"
-                  ? <Users className="w-5 h-5 text-indigo-500" />
-                  : <span className="text-sm font-medium text-indigo-600">{name.charAt(0)}</span>
-                }
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center justify-between gap-2">
-                  <span className="font-medium text-sm text-gray-900 truncate">{name}</span>
-                  {conv.last_message && (
-                    <span className="text-xs text-gray-400 shrink-0">
-                      {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: true })}
-                    </span>
+      {conversations.length === 0 ? (
+        <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
+          <span className="material-symbols-outlined text-5xl opacity-30">forum</span>
+          <p className="text-sm font-medium">No chats yet</p>
+          <p className="text-xs text-slate-300 text-center">Browse the map and tap a pin to start chatting</p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {conversations.map((conv) => {
+            const other = conv.other_participant;
+            const name = other?.is_anonymous === false && other?.profiles
+              ? other.profiles.display_name || other.profiles.username
+              : other?.anonymous_alias ?? "Unknown";
+            const initials = name.slice(0, 2).toUpperCase();
+            const avatarColor = getAvatarColor(name);
+            const hasUnread = conv.unread_count > 0;
+
+            return (
+              <Link
+                key={conv.id}
+                href={`/chat/${conv.id}`}
+                className="flex items-center p-4 rounded-2xl bg-white hover:bg-slate-50 transition-all duration-200 group"
+              >
+                <div className="relative shrink-0">
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${avatarColor}`} style={{ fontFamily: "var(--font-headline)" }}>
+                    {conv.type === "group"
+                      ? <span className="material-symbols-outlined text-xl">groups</span>
+                      : initials
+                    }
+                  </div>
+                  {hasUnread && (
+                    <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-indigo-600 border-2 border-white rounded-full" />
                   )}
                 </div>
-                <div className="flex items-center justify-between gap-2 mt-0.5">
-                  <p className="text-xs text-gray-500 truncate">
+
+                <div className="ml-4 flex-1 min-w-0">
+                  <div className="flex justify-between items-baseline mb-0.5">
+                    <span className={`text-base font-bold truncate ${hasUnread ? "text-[#2c3437]" : "text-[#2c3437]"}`} style={{ fontFamily: "var(--font-headline)" }}>
+                      {name}
+                    </span>
+                    {conv.last_message && (
+                      <span className={`text-[11px] font-bold shrink-0 ml-2 ${hasUnread ? "text-indigo-600" : "text-[#596064]"}`}>
+                        {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false })} ago
+                      </span>
+                    )}
+                  </div>
+                  <p className={`text-sm truncate ${hasUnread ? "font-semibold text-[#2c3437]" : "text-[#596064]"}`}>
                     {conv.last_message?.type === "system"
                       ? <span className="italic">{conv.last_message.content}</span>
                       : conv.last_message?.content ?? "No messages yet"
                     }
                   </p>
-                  {conv.unread_count > 0 && (
-                    <Badge className="bg-indigo-600 text-white text-xs h-5 min-w-5 flex items-center justify-center shrink-0">
-                      {conv.unread_count}
-                    </Badge>
-                  )}
                 </div>
-                {other?.is_anonymous && (
-                  <span className="text-xs text-gray-300">Anonymous</span>
+
+                {hasUnread && (
+                  <div className="ml-3 shrink-0 w-2.5 h-2.5 bg-indigo-600 rounded-full" />
                 )}
-              </div>
-            </Link>
-          );
-        })}
+              </Link>
+            );
+          })}
+        </div>
+      )}
+
+      <div className="mt-12 text-center pb-8">
+        <div className="inline-flex items-center gap-2 text-slate-300">
+          <span className="material-symbols-outlined text-sm">lock</span>
+          <span className="text-xs font-medium">All chats are anonymous and private.</span>
+        </div>
       </div>
     </div>
   );

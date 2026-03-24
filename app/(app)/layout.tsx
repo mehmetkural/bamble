@@ -11,7 +11,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
   return (
     <div className="h-full flex flex-col">
       <AppNav userId={user.id} />
-      <main className="flex-1 overflow-hidden">{children}</main>
+      <main className="flex-1 overflow-hidden pt-[56px] pb-[88px] md:pb-0">{children}</main>
     </div>
   );
 }

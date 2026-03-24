@@ -1,9 +1,19 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Manrope, Plus_Jakarta_Sans } from "next/font/google";
 import "./globals.css";
 import { Toaster } from "@/components/ui/sonner";
 
-const geist = Geist({ subsets: ["latin"] });
+const manrope = Manrope({
+  subsets: ["latin"],
+  variable: "--font-headline",
+  display: "swap",
+});
+
+const plusJakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  variable: "--font-body",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   title: "Bamble — Find your people",
@@ -17,7 +27,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="h-full">
-      <body className={`${geist.className} h-full antialiased`}>
+      <body className={`${manrope.variable} ${plusJakarta.variable} font-body h-full antialiased bg-[#f7f9fb] text-[#2c3437]`}>
         {children}
         <Toaster />
       </body>
