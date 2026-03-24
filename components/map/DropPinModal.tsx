@@ -110,8 +110,6 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                       )}
                       style={categorySlug === cat.slug ? {
                         backgroundColor: cat.color + "20",
-                        ringColor: cat.color,
-                        borderColor: cat.color,
                         border: `2px solid ${cat.color}`,
                       } : {}}
                       title={cat.label}
