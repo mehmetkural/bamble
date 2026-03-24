@@ -62,8 +62,10 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
       const otherParticipant = participants.find((p) => p.user_id !== userId);
       if (otherParticipant) {
         const conn = conns.find((c: any) =>
-          (c.requester_id === userId && c.recipient_id === otherParticipant.user_id) ||
-          (c.requester_id === otherParticipant.user_id && c.recipient_id === userId)
+          c.conversation_id === conversationId && (
+            (c.requester_id === userId && c.recipient_id === otherParticipant.user_id) ||
+            (c.requester_id === otherParticipant.user_id && c.recipient_id === userId)
+          )
         );
         setConnection(conn);
       }
