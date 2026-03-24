@@ -10,7 +10,7 @@ interface Props {
 
 export default function CategoryFilter({ selected, onChange }: Props) {
   return (
-    <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
+    <div className="flex gap-2 overflow-x-auto" style={{ scrollbarWidth: "none", msOverflowStyle: "none" }}>
       <button
         onClick={() => onChange(null)}
         className={cn(

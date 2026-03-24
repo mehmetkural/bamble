@@ -89,11 +89,12 @@ export default function RadioFeedPage({ userId }: { userId: string }) {
       </div>
 
       {/* Feed */}
-      <div className="flex-1 overflow-y-auto py-4 space-y-1">
+      <div className="flex-1 overflow-y-auto">
+        <div className="flex flex-col justify-end min-h-full py-4 space-y-1">
         {loading ? (
-          <div className="flex items-center justify-center h-full text-[#596064] text-sm">Loading...</div>
+          <div className="flex items-center justify-center py-20 text-[#596064] text-sm">Loading...</div>
         ) : feed.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full gap-3 text-[#596064]">
+          <div className="flex flex-col items-center justify-center py-20 gap-3 text-[#596064]">
             <span className="material-symbols-outlined text-5xl text-slate-300">radio</span>
             <p className="text-sm font-medium">No activity yet — say something to Bamberg!</p>
           </div>
@@ -131,6 +132,7 @@ export default function RadioFeedPage({ userId }: { userId: string }) {
           })
         )}
         <div ref={bottomRef} />
+        </div>
       </div>
 
       {/* Input */}
