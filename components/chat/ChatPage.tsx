@@ -62,10 +62,8 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
       const otherParticipant = participants.find((p) => p.user_id !== userId);
       if (otherParticipant) {
         const conn = conns.find((c: any) =>
-          c.conversation_id === conversationId && (
-            (c.requester_id === userId && c.recipient_id === otherParticipant.user_id) ||
-            (c.requester_id === otherParticipant.user_id && c.recipient_id === userId)
-          )
+          (c.requester_id === userId && c.recipient_id === otherParticipant.user_id) ||
+          (c.requester_id === otherParticipant.user_id && c.recipient_id === userId)
         );
         setConnection(conn);
       }
@@ -187,6 +185,7 @@ export default function ChatPage({ conversationId, userId }: { conversationId: s
           onClick={async () => {
             const res = await fetch("/api/connections", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ recipient_id: otherParticipant.user_id, conversation_id: conversationId }) });
             if (res.ok) { toast.success("Connection request sent!"); fetchConnection(); fetchMessages(); }
+            else if (res.status === 409) { fetchConnection(); }
             else { const err = await res.json(); toast.error(err.error || "Failed"); }
           }}
           className="shrink-0 w-full flex items-center justify-center gap-2 py-2.5 bg-indigo-50 border-b border-indigo-100 hover:bg-indigo-100 active:bg-indigo-200 transition-colors"
