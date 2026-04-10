@@ -7,8 +7,8 @@ export default function MainWrapper({ children }: { children: React.ReactNode })
   const isMap = pathname.startsWith("/map");
   return (
     <main className={cn(
-      "flex-1 overflow-hidden pt-[56px] pb-[88px] md:pb-0",
-      !isMap && "md:ml-64"
+      "h-full overflow-hidden pb-[80px] md:pb-0",
+      "md:ml-20 lg:ml-64"
     )}>
       {children}
     </main>

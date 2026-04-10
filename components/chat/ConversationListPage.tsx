@@ -17,23 +17,26 @@ interface Conversation {
   unread_count: number;
 }
 
-const AVATAR_COLORS = [
-  "bg-indigo-100 text-indigo-600",
+const ICON_COLORS = [
+  "bg-[#959efd]/20 text-[#4c56af]",
   "bg-amber-100 text-amber-600",
   "bg-emerald-100 text-emerald-600",
   "bg-rose-100 text-rose-600",
-  "bg-slate-200 text-slate-600",
+  "bg-cyan-100 text-cyan-700",
   "bg-purple-100 text-purple-600",
 ];
 
-function getAvatarColor(name: string) {
-  const idx = name.charCodeAt(0) % AVATAR_COLORS.length;
-  return AVATAR_COLORS[idx];
+const ICONS = ["storm", "psychology", "self_improvement", "bolt", "sunny", "rocket_launch"];
+
+function getAvatarStyle(name: string) {
+  const idx = name.charCodeAt(0) % ICON_COLORS.length;
+  return { color: ICON_COLORS[idx], icon: ICONS[idx] };
 }
 
 export default function ConversationListPage({ userId }: { userId: string }) {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
 
   useEffect(() => {
     fetch("/api/conversations")
@@ -44,94 +47,107 @@ export default function ConversationListPage({ userId }: { userId: string }) {
       });
   }, []);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center h-full text-slate-400 text-sm">
-        Loading chats...
-      </div>
-    );
-  }
+  const filtered = conversations.filter((conv) => {
+    const other = conv.other_participant;
+    const name = other?.is_anonymous === false && other?.profiles
+      ? other.profiles.display_name || other.profiles.username
+      : other?.anonymous_alias ?? "";
+    return name.toLowerCase().includes(search.toLowerCase());
+  });
 
   return (
-    <div className="max-w-2xl mx-auto px-6 md:px-10 pt-6">
-      <div className="flex justify-between items-end mb-8">
-        <div>
-          <h2 className="text-3xl font-extrabold tracking-tight text-[#2c3437] mb-1" style={{ fontFamily: "var(--font-headline)" }}>
-            Conversations
-          </h2>
-          <p className="text-[#596064] text-sm">Connect with the shadows around you.</p>
+    <div className="h-full flex flex-col bg-[#f8fafb]">
+      {/* Header */}
+      <div className="px-6 md:px-8 pt-8 pb-4 bg-white border-b border-[#e1e3e4]/60">
+        <h2 className="font-headline text-2xl font-bold text-[#191c1d] mb-5">Messages</h2>
+        <div className="relative">
+          <span className="material-symbols-outlined absolute left-4 top-3 text-[#6f7979] text-xl">search</span>
+          <input
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full h-11 bg-[#eceeef] border-none rounded-full px-12 text-sm focus:ring-2 focus:ring-[#00464d]/20 placeholder:text-[#6f7979]/60 outline-none"
+            placeholder="Search conversations…"
+          />
         </div>
       </div>
 
-      {conversations.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 text-slate-400 gap-4">
-          <span className="material-symbols-outlined text-5xl opacity-30">forum</span>
-          <p className="text-sm font-medium">No chats yet</p>
-          <p className="text-xs text-slate-300 text-center">Browse the map and tap a pin to start chatting</p>
-        </div>
-      ) : (
-        <div className="space-y-2">
-          {conversations.map((conv) => {
+      {/* List */}
+      <div className="flex-1 overflow-y-auto px-4 py-4 space-y-1.5">
+        {loading ? (
+          <div className="flex items-center justify-center h-full text-[#6f7979] text-sm">
+            Loading…
+          </div>
+        ) : filtered.length === 0 ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4 text-[#6f7979]">
+            <span className="material-symbols-outlined text-5xl opacity-25">forum</span>
+            <p className="text-sm font-semibold">No conversations yet</p>
+            <p className="text-xs opacity-60 text-center">Browse the map and tap a pin to start chatting</p>
+          </div>
+        ) : (
+          filtered.map((conv) => {
             const other = conv.other_participant;
             const name = other?.is_anonymous === false && other?.profiles
               ? other.profiles.display_name || other.profiles.username
-              : other?.anonymous_alias ?? "Unknown";
-            const initials = name.slice(0, 2).toUpperCase();
-            const avatarColor = getAvatarColor(name);
+              : other?.anonymous_alias ?? "Unknown Voyager";
             const hasUnread = conv.unread_count > 0;
+            const { color, icon } = getAvatarStyle(name);
 
             return (
               <Link
                 key={conv.id}
                 href={`/chat/${conv.id}`}
-                className="flex items-center p-4 rounded-2xl bg-white hover:bg-slate-50 transition-all duration-200 group"
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${hasUnread ? "bg-white shadow-[0_4px_24px_0_rgba(0,0,0,0.04)] ring-1 ring-[#00464d]/10" : "hover:bg-white"}`}
               >
+                {/* Avatar */}
                 <div className="relative shrink-0">
-                  <div className={`w-14 h-14 rounded-full flex items-center justify-center text-xl font-bold ${avatarColor}`} style={{ fontFamily: "var(--font-headline)" }}>
+                  <div className={`w-14 h-14 rounded-full flex items-center justify-center ${color}`}>
                     {conv.type === "group"
-                      ? <span className="material-symbols-outlined text-xl">groups</span>
-                      : initials
+                      ? <span className="material-symbols-outlined text-2xl">diversity_3</span>
+                      : <span className="material-symbols-outlined text-2xl">{icon}</span>
                     }
                   </div>
                 </div>
 
-                <div className="ml-4 flex-1 min-w-0">
+                {/* Text */}
+                <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <span className="text-base font-bold truncate text-[#2c3437]" style={{ fontFamily: "var(--font-headline)" }}>
+                    <h3 className={`font-headline font-semibold truncate text-[#191c1d] ${hasUnread ? "font-bold" : ""}`}>
                       {name}
-                    </span>
+                    </h3>
                     {conv.last_message && (
-                      <span className={`text-[11px] font-bold shrink-0 ml-2 ${hasUnread ? "text-indigo-600" : "text-[#596064]"}`}>
+                      <span className={`text-[10px] shrink-0 ml-2 ${hasUnread ? "text-[#00464d] font-bold" : "text-[#6f7979]"}`}>
                         {formatDistanceToNow(new Date(conv.last_message.created_at), { addSuffix: false })} ago
                       </span>
                     )}
                   </div>
-                  <p className={`text-sm truncate ${hasUnread ? "font-semibold text-[#2c3437]" : "text-[#596064]"}`}>
+                  <p className={`text-sm truncate ${hasUnread ? "font-semibold text-[#191c1d]" : "text-[#3f4949]"}`}>
                     {conv.last_message?.type === "system"
-                      ? <span className="italic">{conv.last_message.content}</span>
+                      ? <span className="italic text-[#6f7979]">{conv.last_message.content}</span>
                       : conv.last_message?.content ?? "No messages yet"
                     }
                   </p>
                 </div>
 
+                {/* Unread badge */}
                 {hasUnread && (
-                  <div className="ml-3 shrink-0 min-w-[22px] h-[22px] px-1.5 bg-indigo-600 rounded-full flex items-center justify-center">
-                    <span className="text-[11px] font-bold text-white">
+                  <div className="shrink-0 min-w-[22px] h-[22px] px-1.5 bg-[#00464d] rounded-full flex items-center justify-center">
+                    <span className="text-[10px] font-bold text-white">
                       {conv.unread_count > 99 ? "99+" : conv.unread_count}
                     </span>
                   </div>
                 )}
               </Link>
             );
-          })}
-        </div>
-      )}
+          })
+        )}
+      </div>
 
-      <div className="mt-12 text-center pb-8">
-        <div className="inline-flex items-center gap-2 text-slate-300">
+      {/* Footer */}
+      <div className="py-5 text-center">
+        <span className="inline-flex items-center gap-2 text-[#6f7979] text-xs font-medium">
           <span className="material-symbols-outlined text-sm">lock</span>
-          <span className="text-xs font-medium">All chats are anonymous and private.</span>
-        </div>
+          All conversations are private and anonymous
+        </span>
       </div>
     </div>
   );
