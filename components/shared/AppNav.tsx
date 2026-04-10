@@ -8,10 +8,11 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 
 const NAV_ITEMS = [
-  { href: "/map",     icon: "map",            label: "Map"      },
-  { href: "/chat",    icon: "chat_bubble",    label: "Chats"    },
-  { href: "/groups",  icon: "group",          label: "Groups"   },
-  { href: "/profile", icon: "account_circle", label: "Profile"  },
+  { href: "/map",     icon: "map",            label: "Map"         },
+  { href: "/chat",    icon: "chat_bubble",    label: "Chats"       },
+  { href: "/groups",  icon: "diversity_3",    label: "Communities" },
+  { href: "/radio",   icon: "radio",          label: "Radio"       },
+  { href: "/profile", icon: "account_circle", label: "Profile"     },
 ];
 
 export default function AppNav({ userId }: { userId: string }) {
@@ -122,7 +123,7 @@ export default function AppNav({ userId }: { userId: string }) {
       </aside>
 
       {/* ── Mobile Bottom Nav ── */}
-      <nav className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[92%] max-w-md bg-white/85 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex justify-around items-center px-3 py-2.5 z-50">
+      <nav className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[96%] max-w-lg bg-white/85 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex justify-around items-center px-2 py-2.5 z-50">
         {NAV_ITEMS.map(({ href, icon, label }) => {
           const active = pathname.startsWith(href);
           const isChat = href === "/chat";
@@ -132,7 +133,7 @@ export default function AppNav({ userId }: { userId: string }) {
               key={href}
               href={href}
               className={cn(
-                "flex flex-col items-center justify-center px-4 py-2 rounded-2xl transition-all active:scale-90",
+                "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all active:scale-90",
                 active ? "bg-cyan-900 text-white" : "text-slate-500"
               )}
             >
