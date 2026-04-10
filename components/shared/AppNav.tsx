@@ -6,6 +6,7 @@ import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import { useTheme } from "./ThemeProvider";
 
 const NAV_ITEMS = [
   { href: "/map",     icon: "map",            label: "Map"         },
@@ -18,6 +19,7 @@ const NAV_ITEMS = [
 export default function AppNav({ userId }: { userId: string }) {
   const pathname = usePathname();
   const router = useRouter();
+  const { theme, toggle } = useTheme();
   const [totalUnread, setTotalUnread] = useState(0);
 
   useEffect(() => {
@@ -55,15 +57,15 @@ export default function AppNav({ userId }: { userId: string }) {
       />
 
       {/* ── Desktop Sidebar ── */}
-      <aside className="hidden md:flex fixed left-0 top-0 h-full w-20 lg:w-64 flex-col py-8 px-3 lg:px-4 z-40 bg-slate-50/90 backdrop-blur-2xl transition-all duration-300 border-r border-slate-200/40">
+      <aside className="hidden md:flex fixed left-0 top-0 h-full w-20 lg:w-64 flex-col py-8 px-3 lg:px-4 z-40 bg-slate-50/90 dark:bg-slate-950/90 backdrop-blur-2xl transition-all duration-300 border-r border-slate-200/40 dark:border-slate-800/40">
         {/* Logo */}
         <div className="mb-10 px-2 flex items-center gap-3">
           <div className="w-9 h-9 lg:w-10 lg:h-10 rounded-xl bg-[#00464d] flex items-center justify-center shadow-md shrink-0">
             <span className="material-symbols-outlined text-white text-lg" style={{ fontVariationSettings: "'FILL' 1" }}>explore</span>
           </div>
           <div className="hidden lg:block">
-            <h1 className="text-xl font-black text-cyan-900 font-headline leading-none">Bamble</h1>
-            <p className="text-[10px] text-slate-500 font-semibold uppercase tracking-widest mt-0.5">Find your people</p>
+            <h1 className="text-xl font-black text-cyan-900 dark:text-cyan-100 font-headline leading-none">Bamble</h1>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-semibold uppercase tracking-widest mt-0.5">Find your people</p>
           </div>
         </div>
 
@@ -78,10 +80,10 @@ export default function AppNav({ userId }: { userId: string }) {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex items-center justify-center lg:justify-start gap-4 px-3 py-3 rounded-xl transition-all duration-200 group relative",
+                  "flex items-center justify-center lg:justify-start gap-4 px-3 py-3 rounded-xl transition-all duration-200 relative",
                   active
-                    ? "bg-cyan-100/60 text-cyan-900"
-                    : "text-slate-500 hover:bg-cyan-50 hover:text-cyan-800"
+                    ? "bg-cyan-100/60 dark:bg-cyan-900/30 text-cyan-900 dark:text-cyan-100"
+                    : "text-slate-500 dark:text-slate-400 hover:bg-cyan-50 dark:hover:bg-cyan-900/20 hover:text-cyan-800 dark:hover:text-cyan-200"
                 )}
               >
                 <span
@@ -104,7 +106,7 @@ export default function AppNav({ userId }: { userId: string }) {
         </nav>
 
         {/* Bottom actions */}
-        <div className="mt-auto pt-6 border-t border-slate-200/50 space-y-2">
+        <div className="mt-auto pt-6 border-t border-slate-200/50 dark:border-slate-800/50 space-y-2">
           <Link
             href="/map"
             className="w-full flex items-center justify-center lg:justify-start gap-3 py-3 px-3 bg-[#00464d] text-white rounded-xl font-bold text-sm shadow-md hover:bg-[#006069] active:scale-95 transition-all"
@@ -112,9 +114,24 @@ export default function AppNav({ userId }: { userId: string }) {
             <span className="material-symbols-outlined text-xl">add_location_alt</span>
             <span className="hidden lg:block">Drop a Pin</span>
           </Link>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggle}
+            className="w-full flex items-center justify-center lg:justify-start gap-3 py-2.5 px-3 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-sm"
+            title={theme === "dark" ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            <span className="material-symbols-outlined text-xl">
+              {theme === "dark" ? "light_mode" : "dark_mode"}
+            </span>
+            <span className="hidden lg:block font-medium">
+              {theme === "dark" ? "Light mode" : "Dark mode"}
+            </span>
+          </button>
+
           <button
             onClick={handleSignOut}
-            className="w-full flex items-center justify-center lg:justify-start gap-3 py-2.5 px-3 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all text-sm"
+            className="w-full flex items-center justify-center lg:justify-start gap-3 py-2.5 px-3 text-slate-400 dark:text-slate-500 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-xl transition-all text-sm"
           >
             <span className="material-symbols-outlined text-xl">logout</span>
             <span className="hidden lg:block font-medium">Sign out</span>
@@ -123,7 +140,7 @@ export default function AppNav({ userId }: { userId: string }) {
       </aside>
 
       {/* ── Mobile Bottom Nav ── */}
-      <nav className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[96%] max-w-lg bg-white/85 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex justify-around items-center px-2 py-2.5 z-50">
+      <nav className="md:hidden fixed bottom-5 left-1/2 -translate-x-1/2 w-[96%] max-w-lg bg-white/85 dark:bg-slate-900/85 backdrop-blur-xl rounded-3xl shadow-[0_8px_32px_rgba(0,0,0,0.08)] flex justify-around items-center px-2 py-2.5 z-50">
         {NAV_ITEMS.map(({ href, icon, label }) => {
           const active = pathname.startsWith(href);
           const isChat = href === "/chat";
@@ -134,7 +151,9 @@ export default function AppNav({ userId }: { userId: string }) {
               href={href}
               className={cn(
                 "flex flex-col items-center justify-center px-3 py-2 rounded-2xl transition-all active:scale-90",
-                active ? "bg-cyan-900 text-white" : "text-slate-500"
+                active
+                  ? "bg-cyan-900 dark:bg-cyan-100 text-white dark:text-cyan-950"
+                  : "text-slate-500 dark:text-slate-400"
               )}
             >
               <span className="relative">
@@ -154,6 +173,19 @@ export default function AppNav({ userId }: { userId: string }) {
             </Link>
           );
         })}
+
+        {/* Theme toggle on mobile */}
+        <button
+          onClick={toggle}
+          className="flex flex-col items-center justify-center px-3 py-2 text-slate-500 dark:text-slate-400 rounded-2xl transition-all active:scale-90"
+        >
+          <span className="material-symbols-outlined text-xl">
+            {theme === "dark" ? "light_mode" : "dark_mode"}
+          </span>
+          <span className="text-[9px] font-bold uppercase tracking-wide mt-0.5">
+            {theme === "dark" ? "Light" : "Dark"}
+          </span>
+        </button>
       </nav>
     </>
   );

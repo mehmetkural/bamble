@@ -56,16 +56,16 @@ export default function ConversationListPage({ userId }: { userId: string }) {
   });
 
   return (
-    <div className="h-full flex flex-col bg-[#f8fafb]">
+    <div className="h-full flex flex-col bg-[#f8fafb] dark:bg-[#0f1415]">
       {/* Header */}
-      <div className="px-6 md:px-8 pt-8 pb-4 bg-white border-b border-[#e1e3e4]/60">
-        <h2 className="font-headline text-2xl font-bold text-[#191c1d] mb-5">Messages</h2>
+      <div className="px-6 md:px-8 pt-8 pb-4 bg-white dark:bg-[#0f1415] border-b border-[#e1e3e4]/60 dark:border-[#2e3839]/60">
+        <h2 className="font-headline text-2xl font-bold text-[#191c1d] dark:text-[#e1e3e4] mb-5">Messages</h2>
         <div className="relative">
           <span className="material-symbols-outlined absolute left-4 top-3 text-[#6f7979] text-xl">search</span>
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full h-11 bg-[#eceeef] border-none rounded-full px-12 text-sm focus:ring-2 focus:ring-[#00464d]/20 placeholder:text-[#6f7979]/60 outline-none"
+            className="w-full h-11 bg-[#eceeef] dark:bg-[#1a1f20] border-none rounded-full px-12 text-sm focus:ring-2 focus:ring-[#00464d]/20 placeholder:text-[#6f7979]/60 outline-none text-[#191c1d] dark:text-[#e1e3e4]"
             placeholder="Search conversations…"
           />
         </div>
@@ -96,7 +96,7 @@ export default function ConversationListPage({ userId }: { userId: string }) {
               <Link
                 key={conv.id}
                 href={`/chat/${conv.id}`}
-                className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${hasUnread ? "bg-white shadow-[0_4px_24px_0_rgba(0,0,0,0.04)] ring-1 ring-[#00464d]/10" : "hover:bg-white"}`}
+                className={`flex items-center gap-4 p-4 rounded-2xl transition-all ${hasUnread ? "bg-white dark:bg-[#1a1f20] shadow-[0_4px_24px_0_rgba(0,0,0,0.04)] ring-1 ring-[#00464d]/10" : "hover:bg-white dark:hover:bg-[#1a1f20]"}`}
               >
                 {/* Avatar */}
                 <div className="relative shrink-0">
@@ -111,7 +111,7 @@ export default function ConversationListPage({ userId }: { userId: string }) {
                 {/* Text */}
                 <div className="flex-1 min-w-0">
                   <div className="flex justify-between items-baseline mb-0.5">
-                    <h3 className={`font-headline font-semibold truncate text-[#191c1d] ${hasUnread ? "font-bold" : ""}`}>
+                    <h3 className={`font-headline font-semibold truncate text-[#191c1d] dark:text-[#e1e3e4] ${hasUnread ? "font-bold" : ""}`}>
                       {name}
                     </h3>
                     {conv.last_message && (
@@ -120,7 +120,7 @@ export default function ConversationListPage({ userId }: { userId: string }) {
                       </span>
                     )}
                   </div>
-                  <p className={`text-sm truncate ${hasUnread ? "font-semibold text-[#191c1d]" : "text-[#3f4949]"}`}>
+                  <p className={`text-sm truncate ${hasUnread ? "font-semibold text-[#191c1d] dark:text-[#e1e3e4]" : "text-[#3f4949] dark:text-[#8fa3a8]"}`}>
                     {conv.last_message?.type === "system"
                       ? <span className="italic text-[#6f7979]">{conv.last_message.content}</span>
                       : conv.last_message?.content ?? "No messages yet"

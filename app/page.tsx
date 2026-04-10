@@ -2,11 +2,11 @@ import Link from "next/link";
 
 export default function LandingPage() {
   return (
-    <div className="min-h-full bg-[#f8fafb] text-[#191c1d]">
+    <div className="min-h-full bg-[#f8fafb] dark:bg-[#0f1415] text-[#191c1d] dark:text-[#e1e3e4]">
       <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" />
 
       {/* ── Nav ── */}
-      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto">
+      <nav className="flex items-center justify-between px-6 py-4 max-w-6xl mx-auto border-b border-[#e1e3e4]/40 dark:border-[#2e3839]/40">
         <div className="flex items-center gap-2.5">
           <div className="w-8 h-8 rounded-lg bg-[#00464d] flex items-center justify-center shadow-sm">
             <span className="material-symbols-outlined text-white text-base" style={{ fontVariationSettings: "'FILL' 1" }}>explore</span>
@@ -14,11 +14,11 @@ export default function LandingPage() {
           <span className="font-headline text-xl font-black text-cyan-900 tracking-tight">Bamble</span>
         </div>
         <div className="flex items-center gap-2">
-          <Link href="/radio" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3f4949] px-4 py-2 rounded-full hover:bg-[#eceeef] transition-colors">
+          <Link href="/radio" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3f4949] dark:text-[#8fa3a8] px-4 py-2 rounded-full hover:bg-[#eceeef] dark:hover:bg-[#1a1f20] transition-colors">
             <span className="material-symbols-outlined text-base">radio</span>
             Radio
           </Link>
-          <Link href="/groups" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3f4949] px-4 py-2 rounded-full hover:bg-[#eceeef] transition-colors">
+          <Link href="/groups" className="hidden sm:flex items-center gap-1.5 text-sm font-medium text-[#3f4949] dark:text-[#8fa3a8] px-4 py-2 rounded-full hover:bg-[#eceeef] dark:hover:bg-[#1a1f20] transition-colors">
             <span className="material-symbols-outlined text-base">group</span>
             Communities
           </Link>
@@ -60,14 +60,14 @@ export default function LandingPage() {
           </Link>
           <Link
             href="/groups"
-            className="flex items-center gap-2 bg-white border border-[#bec8c9]/50 text-[#191c1d] px-7 py-3.5 rounded-full font-semibold hover:bg-[#eceeef] transition-colors text-sm shadow-sm"
+            className="flex items-center gap-2 bg-white dark:bg-[#1a1f20] border border-[#bec8c9]/50 dark:border-[#2e3839] text-[#191c1d] dark:text-[#e1e3e4] px-7 py-3.5 rounded-full font-semibold hover:bg-[#eceeef] transition-colors text-sm shadow-sm"
           >
             <span className="material-symbols-outlined text-base">diversity_3</span>
             Browse Communities
           </Link>
           <Link
             href="/radio"
-            className="flex items-center gap-2 bg-white border border-[#bec8c9]/50 text-[#191c1d] px-7 py-3.5 rounded-full font-semibold hover:bg-[#eceeef] transition-colors text-sm shadow-sm"
+            className="flex items-center gap-2 bg-white dark:bg-[#1a1f20] border border-[#bec8c9]/50 dark:border-[#2e3839] text-[#191c1d] dark:text-[#e1e3e4] px-7 py-3.5 rounded-full font-semibold hover:bg-[#eceeef] transition-colors text-sm shadow-sm"
           >
             <span className="material-symbols-outlined text-base">radio</span>
             Explore Radio
@@ -184,7 +184,7 @@ export default function LandingPage() {
             <span className="material-symbols-outlined text-base">map</span>
             Open Bamble Map
           </Link>
-          <Link href="/radio" className="flex items-center gap-2 bg-white border border-[#bec8c9]/50 text-[#191c1d] px-9 py-4 rounded-full font-bold text-sm hover:bg-[#eceeef] transition-colors shadow-sm">
+          <Link href="/radio" className="flex items-center gap-2 bg-white dark:bg-[#1a1f20] border border-[#bec8c9]/50 dark:border-[#2e3839] text-[#191c1d] dark:text-[#e1e3e4] px-9 py-4 rounded-full font-bold text-sm hover:bg-[#eceeef] transition-colors shadow-sm">
             <span className="material-symbols-outlined text-base">radio</span>
             Try Radio
           </Link>
@@ -192,7 +192,7 @@ export default function LandingPage() {
       </section>
 
       {/* ── Footer ── */}
-      <footer className="border-t border-[#e1e3e4] px-6 py-8 max-w-6xl mx-auto">
+      <footer className="border-t border-[#e1e3e4] dark:border-[#2e3839] px-6 py-8 max-w-6xl mx-auto">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-[#6f7979]">
           <div className="flex items-center gap-2">
             <div className="w-6 h-6 rounded-md bg-[#00464d] flex items-center justify-center">
@@ -229,7 +229,7 @@ function Pin({ x, y, label, color, active }: { x: string; y: string; label: stri
 
 function FeatureCard({ href, icon, label, title, description, accent }: { href: string; icon: string; label: string; title: string; description: string; accent: string }) {
   return (
-    <Link href={href} className="group bg-white border border-[#e1e3e4] rounded-2xl p-7 hover:shadow-lg hover:border-transparent transition-all flex flex-col gap-4">
+    <Link href={href} className="group bg-white dark:bg-[#1a1f20] border border-[#e1e3e4] dark:border-[#2e3839] rounded-2xl p-7 hover:shadow-lg hover:border-transparent dark:hover:border-[#3e4849] transition-all flex flex-col gap-4">
       <div className="flex items-center justify-between">
         <div className="w-11 h-11 rounded-xl flex items-center justify-center" style={{ backgroundColor: accent + "18" }}>
           <span className="material-symbols-outlined" style={{ color: accent, fontVariationSettings: "'FILL' 1" }}>{icon}</span>
@@ -250,7 +250,7 @@ function FeatureCard({ href, icon, label, title, description, accent }: { href: 
 
 function Step({ number, icon, title, description }: { number: string; icon: string; title: string; description: string }) {
   return (
-    <div className="bg-white border border-[#e1e3e4] rounded-2xl p-8">
+    <div className="bg-white dark:bg-[#1a1f20] border border-[#e1e3e4] dark:border-[#2e3839] rounded-2xl p-8">
       <div className="flex items-center gap-3 mb-5">
         <span className="font-headline text-5xl font-black text-[#e1e3e4]">{number}</span>
         <div className="w-10 h-10 rounded-full bg-[#eceeef] flex items-center justify-center">
