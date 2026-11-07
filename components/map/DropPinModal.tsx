@@ -22,7 +22,44 @@ interface GeoSuggestion {
 
 const MAPBOX_TOKEN = process.env.NEXT_PUBLIC_MAPBOX_TOKEN!;
 
-export default function DropPinModal({ open, onClose, initialLocation, onPinDropped, userId }: Props) {
+// Parses "49.9001, 10.9232" or DMS like 49°54'00.3"N 10°55'23.5"E
+function parseCoordinates(input: string): { lat: number; lng: number } | null {
+  const q = input.trim();
+  const dec = q.match(/^(-?\d+(?:\.\d+)?)\s*[,;\s]\s*(-?\d+(?:\.\d+)?)$/);
+  if (dec) {
+    const lat = parseFloat(dec[1]);
+    const lng = parseFloat(dec[2]);
+    if (Math.abs(lat) <= 90 && Math.abs(lng) <= 180) return { lat, lng };
+    return null;
+  }
+  const dmsRe =
+    /(\d+(?:\.\d+)?)\s*°\s*(?:(\d+(?:\.\d+)?)\s*['′]\s*)?(?:(\d+(?:\.\d+)?)\s*(?:["″]|''|′′)\s*)?([NSEW])/gi;
+  const parts = [...q.matchAll(dmsRe)];
+  if (parts.length !== 2) return null;
+  let lat: number | null = null;
+  let lng: number | null = null;
+  for (const m of parts) {
+    const value =
+      parseFloat(m[1]) +
+      parseFloat(m[2] ?? "0") / 60 +
+      parseFloat(m[3] ?? "0") / 3600;
+    const dir = m[4].toUpperCase();
+    const signed = dir === "S" || dir === "W" ? -value : value;
+    if (dir === "N" || dir === "S") lat = signed;
+    else lng = signed;
+  }
+  if (lat === null || lng === null || Math.abs(lat) > 90 || Math.abs(lng) > 180)
+    return null;
+  return { lat, lng };
+}
+
+export default function DropPinModal({
+  open,
+  onClose,
+  initialLocation,
+  onPinDropped,
+  userId,
+}: Props) {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [locationName, setLocationName] = useState("");
@@ -47,22 +84,35 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
   }, [open, initialLocation]);
 
   const searchAddress = useCallback(async (query: string) => {
-    if (query.length < 3) { setSuggestions([]); return; }
+    if (query.length < 3) {
+      setSuggestions([]);
+      return;
+    }
     const url = `https://api.mapbox.com/geocoding/v5/mapbox.places/${encodeURIComponent(query)}.json?access_token=${MAPBOX_TOKEN}&proximity=10.9028,49.8988&bbox=10.50,49.60,11.30,50.20&language=de,en&limit=5`;
     const res = await fetch(url);
     if (!res.ok) return;
     const data = await res.json();
-    setSuggestions(data.features?.map((f: any) => ({
-      id: f.id,
-      place_name: f.place_name,
-      center: f.center,
-    })) ?? []);
+    setSuggestions(
+      data.features?.map((f: any) => ({
+        id: f.id,
+        place_name: f.place_name,
+        center: f.center,
+      })) ?? [],
+    );
     setShowSuggestions(true);
   }, []);
 
   function handleAddressChange(value: string) {
     setAddressQuery(value);
     if (debounceRef.current) clearTimeout(debounceRef.current);
+    const coords = parseCoordinates(value);
+    if (coords) {
+      setLat(coords.lat.toFixed(6));
+      setLng(coords.lng.toFixed(6));
+      setSuggestions([]);
+      setShowSuggestions(false);
+      return;
+    }
     debounceRef.current = setTimeout(() => searchAddress(value), 300);
   }
 
@@ -78,35 +128,46 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!lat || !lng) {
-      toast.error("Harita üzerinde çift tıklayın veya adres arayın.");
+      toast.error(
+        "Konum seçilmedi: haritada çift tıklayın, listeden bir adres seçin veya koordinat girin.",
+      );
+      return;
+    }
+    if (!title.trim()) {
+      toast.error('Lütfen "What are you up to?" alanını doldurun.');
       return;
     }
     setLoading(true);
-    const res = await fetch("/api/pins", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title,
-        description,
-        location_name: locationName,
-        category_slug: categorySlug,
-        latitude: parseFloat(lat),
-        longitude: parseFloat(lng),
-      }),
-    });
-    if (res.ok) {
-      onPinDropped();
-      onClose();
-      setTitle("");
-      setDescription("");
-      setLocationName("");
-      setAddressQuery("");
-      setCategorySlug("other");
-    } else {
-      const err = await res.json();
-      toast.error(err.error || "Failed to drop pin");
+    try {
+      const res = await fetch("/api/pins", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          title,
+          description,
+          location_name: locationName,
+          category_slug: categorySlug,
+          latitude: parseFloat(lat),
+          longitude: parseFloat(lng),
+        }),
+      });
+      if (res.ok) {
+        onPinDropped();
+        onClose();
+        setTitle("");
+        setDescription("");
+        setLocationName("");
+        setAddressQuery("");
+        setCategorySlug("other");
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error(err.error || "Failed to drop pin");
+      }
+    } catch {
+      toast.error("Bağlantı hatası, tekrar deneyin.");
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }
 
   const selectedCat = CATEGORIES.find((c) => c.slug === categorySlug);
@@ -118,18 +179,28 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
           {/* Header */}
           <div className="px-7 pt-7 pb-4 flex justify-between items-start">
             <div>
-              <h2 className="text-2xl font-bold text-[#2c3437]" style={{ fontFamily: "var(--font-headline)" }}>
+              <h2
+                className="text-2xl font-bold text-[#2c3437]"
+                style={{ fontFamily: "var(--font-headline)" }}
+              >
                 Drop a Pin
               </h2>
               {lat && lng ? (
                 <div className="flex items-center gap-1.5 mt-1.5 py-1 px-2.5 bg-[#f0f4f7] rounded-full w-fit">
-                  <span className="material-symbols-outlined text-sm text-indigo-600" style={{ fontVariationSettings: "'FILL' 1" }}>location_on</span>
+                  <span
+                    className="material-symbols-outlined text-sm text-indigo-600"
+                    style={{ fontVariationSettings: "'FILL' 1" }}
+                  >
+                    location_on
+                  </span>
                   <span className="text-xs font-semibold text-[#596064] uppercase tracking-wide">
                     {parseFloat(lat).toFixed(3)}, {parseFloat(lng).toFixed(3)}
                   </span>
                 </div>
               ) : (
-                <p className="text-xs text-[#596064] mt-1.5">Adres girin veya haritada çift tıklayın</p>
+                <p className="text-xs text-[#596064] mt-1.5">
+                  Adres girin veya haritada çift tıklayın
+                </p>
               )}
             </div>
           </div>
@@ -139,19 +210,31 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
               {/* Address search */}
               <div className="relative">
                 <div className="flex items-center gap-2 bg-[#f0f4f7] rounded-xl px-3 py-2.5">
-                  <span className="material-symbols-outlined text-indigo-400 text-lg shrink-0">search</span>
+                  <span className="material-symbols-outlined text-indigo-400 text-lg shrink-0">
+                    search
+                  </span>
                   <input
                     className="flex-1 bg-transparent text-sm text-[#2c3437] placeholder:text-[#acb3b7] outline-none border-none"
                     placeholder="Adres ara (örn. Maxplatz, Bamberg)"
                     value={addressQuery}
                     onChange={(e) => handleAddressChange(e.target.value)}
-                    onFocus={() => suggestions.length > 0 && setShowSuggestions(true)}
+                    onFocus={() =>
+                      suggestions.length > 0 && setShowSuggestions(true)
+                    }
                     autoComplete="off"
                   />
                   {addressQuery && (
-                    <button type="button" onClick={() => { setAddressQuery(""); setSuggestions([]); }}
-                      className="text-[#acb3b7] hover:text-[#596064]">
-                      <span className="material-symbols-outlined text-sm">close</span>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setAddressQuery("");
+                        setSuggestions([]);
+                      }}
+                      className="text-[#acb3b7] hover:text-[#596064]"
+                    >
+                      <span className="material-symbols-outlined text-sm">
+                        close
+                      </span>
                     </button>
                   )}
                 </div>
@@ -164,8 +247,12 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                         onClick={() => selectSuggestion(s)}
                         className="w-full flex items-start gap-3 px-4 py-3 hover:bg-indigo-50 transition-colors text-left border-b border-slate-50 last:border-0"
                       >
-                        <span className="material-symbols-outlined text-indigo-400 text-base mt-0.5 shrink-0">location_on</span>
-                        <span className="text-sm text-[#2c3437] leading-snug">{s.place_name}</span>
+                        <span className="material-symbols-outlined text-indigo-400 text-base mt-0.5 shrink-0">
+                          location_on
+                        </span>
+                        <span className="text-sm text-[#2c3437] leading-snug">
+                          {s.place_name}
+                        </span>
                       </button>
                     ))}
                   </div>
@@ -174,7 +261,9 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
 
               {/* Category picker */}
               <div>
-                <p className="text-xs font-bold text-[#596064] mb-3 uppercase tracking-widest">Choose Your Vibe</p>
+                <p className="text-xs font-bold text-[#596064] mb-3 uppercase tracking-widest">
+                  Choose Your Vibe
+                </p>
                 <div className="grid grid-cols-5 gap-2">
                   {CATEGORIES.map((cat) => (
                     <button
@@ -185,12 +274,16 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                         "aspect-square flex flex-col items-center justify-center gap-0.5 rounded-xl text-xs transition-all hover:scale-105 active:scale-95",
                         categorySlug === cat.slug
                           ? "ring-2 scale-105"
-                          : "bg-[#eaeff2] hover:bg-[#e3e9ed]"
+                          : "bg-[#eaeff2] hover:bg-[#e3e9ed]",
                       )}
-                      style={categorySlug === cat.slug ? {
-                        backgroundColor: cat.color + "20",
-                        border: `2px solid ${cat.color}`,
-                      } : {}}
+                      style={
+                        categorySlug === cat.slug
+                          ? {
+                              backgroundColor: cat.color + "20",
+                              border: `2px solid ${cat.color}`,
+                            }
+                          : {}
+                      }
                       title={cat.label}
                     >
                       <span className="text-xl">{cat.icon}</span>
@@ -210,7 +303,6 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
                   placeholder="What are you up to?"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
-                  required
                   maxLength={80}
                 />
               </div>
@@ -241,7 +333,7 @@ export default function DropPinModal({ open, onClose, initialLocation, onPinDrop
             <div className="px-7 pb-7 pt-2">
               <button
                 type="submit"
-                disabled={loading || !lat || !lng}
+                disabled={loading}
                 className="w-full py-4 bg-gradient-to-br from-indigo-600 to-indigo-500 text-white font-bold text-base rounded-xl shadow-lg shadow-indigo-500/30 hover:shadow-indigo-500/40 active:scale-[0.98] transition-all disabled:opacity-50"
                 style={{ fontFamily: "var(--font-headline)" }}
               >
